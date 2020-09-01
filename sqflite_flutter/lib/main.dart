@@ -1,10 +1,30 @@
 import 'dart:math';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:sqflite_flutter/developer_edit_page.dart';
 import 'package:sqflite_flutter/model/developer.dart';
 import 'package:sqflite_flutter/repo/developer_repo.dart';
 
-void main() async {
+const languages = [
+  "Java",
+  "Kotlin",
+  "Swift",
+  "Python",
+  "Dart",
+  "C++",
+  "Matlab",
+  "Octave",
+  "C",
+  "Go",
+  "C#",
+  "Scala",
+  "Ruby",
+  "Javascript",
+];
+
+void main() {
   runApp(MyApp());
 }
 
@@ -48,9 +68,11 @@ class DevelopersPage extends StatefulWidget {
 }
 
 class _DevelopersPageState extends State<DevelopersPage> {
-  final languages = ["Java", "Kotlin", "Swift", "Python", "Dart", "C++", "Matlab"];
-
   List<Developer> _list;
+
+  TextEditingController _searchController;
+
+  String _heading;
 
   void insertRandom() async {
     final random = Random();
@@ -66,6 +88,21 @@ class _DevelopersPageState extends State<DevelopersPage> {
     });
   }
 
+  void saveDeveloper(Developer dev) {
+    final route = CupertinoPageRoute<bool>(
+      builder: (context) => DeveloperEditPage(dev: dev, repo: widget.repo),
+    );
+
+    Navigator.push(
+      context,
+      route,
+    ).then((result) {
+      if (result ?? false) {
+        findAllDeveloper();
+      }
+    });
+  }
+
   void deleteDeveloper({int id, int index}) async {
     await widget.repo.delete(id);
     setState(() {
@@ -73,8 +110,8 @@ class _DevelopersPageState extends State<DevelopersPage> {
     });
   }
 
-  void findAllDeveloper() async {
-    final list = await widget.repo.findAll();
+  void findAllDeveloper({String name, String heading}) async {
+    final list = await widget.repo.findAll(name: name, heading: heading);
     setState(() {
       _list = list;
     });
@@ -84,20 +121,75 @@ class _DevelopersPageState extends State<DevelopersPage> {
   void initState() {
     super.initState();
     _list = List.empty(growable: true);
+    _searchController = TextEditingController();
     findAllDeveloper();
   }
 
   @override
   Widget build(BuildContext context) {
     final appBar = AppBar(
-      title: Text("Developers"),
+      title: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+        decoration: ShapeDecoration(
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10)
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.search, color: Colors.grey),
+            SizedBox(width: 8),
+            Expanded(
+              child: TextField(
+                controller: _searchController,
+                onChanged: (value) {
+                  findAllDeveloper(name: value, heading: _heading);
+                },
+                decoration: InputDecoration.collapsed(
+                  hintText: "Search...",
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      bottom: PreferredSize(
+        preferredSize: Size.fromHeight(46),
+        child: Container(
+          color: Colors.white,
+          height: 46,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            scrollDirection: Axis.horizontal,
+            itemCount: languages.length,
+            itemBuilder: (context, index) {
+              return ChoiceChip(
+                label: Text(languages[index]),
+                selected: _heading == languages[index],
+                onSelected: (selected) {
+                  _heading = selected ? languages[index] : null;
+
+                  findAllDeveloper(
+                    name: _searchController.text,
+                    heading: _heading,
+                  );
+                },
+              );
+            },
+            separatorBuilder: (context, index) {
+              return SizedBox(width: 8);
+            },
+          ),
+        ),
+      ),
     );
 
     return Scaffold(
       appBar: appBar,
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          insertRandom();
+          saveDeveloper(Developer());
         },
         child: Icon(Icons.add),
       ),
@@ -141,13 +233,16 @@ class _DevelopersPageState extends State<DevelopersPage> {
                           Navigator.of(context).pop(true);
                         },
                         child: Text("YES"),
-                      )
+                      ),
                     ],
                   );
                 },
               );
             },
             child: ListTile(
+              onTap: () {
+                saveDeveloper(dev);
+              },
               leading: Container(
                 width: 60,
                 height: 60,
@@ -159,18 +254,18 @@ class _DevelopersPageState extends State<DevelopersPage> {
                       color: Colors.grey[600].withOpacity(0.5),
                       blurRadius: 6,
                       spreadRadius: 1,
-                      offset: Offset(0.6, 0.6)
+                      offset: Offset(0.6, 0.6),
                     )
                   ],
                 ),
               ),
               title: Text(
-                dev.name,
+                dev.name ?? "None",
               ),
               subtitle: Text(
-                dev.heading,
+                dev.heading ?? "None",
               ),
-              trailing: Text(dev.age.toString()),
+              trailing: Text("${dev.age ?? "0"}"),
               shape: RoundedRectangleBorder(
                 side: BorderSide(width: 1, color: Colors.green),
               ),

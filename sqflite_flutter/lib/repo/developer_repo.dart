@@ -1,5 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_flutter/main.dart';
 import 'package:sqflite_flutter/model/developer.dart';
 
 class DeveloperRepo {
@@ -25,6 +27,17 @@ class DeveloperRepo {
     );
 
     return findById(id);
+  }
+
+  Future<void> update(Developer dev) async {
+    final Database db = await _database();
+    await db.update(
+      "developer",
+      dev.toMap(),
+      where: "id = ?",
+      whereArgs: [dev.id],
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   Future<Developer> findById(int id) async {
@@ -59,9 +72,32 @@ class DeveloperRepo {
     );
   }
 
-  Future<List<Developer>> findAll() async {
+  Future<List<Developer>> findAll({String name, String heading}) async {
     final Database db = await _database();
-    final maps = await db.query("developer");
+    List<Map<String, dynamic>> maps;
+
+    var where = "";
+    var whereArgs = [];
+
+    if (name != null && name.isNotEmpty) {
+      where = "name LIKE ?";
+      whereArgs.add("$name%");
+    }
+
+    if (heading != null && heading.isNotEmpty) {
+      where = "$where ${where.isNotEmpty ? "AND " : ""}heading = ?";
+      whereArgs.add("$heading");
+    }
+
+    if (where == null || where.isEmpty) {
+      maps = await db.query("developer");
+    } else {
+      maps = await db.query(
+        "developer",
+        where: where.trim(),
+        whereArgs: whereArgs,
+      );
+    }
 
     return List.generate(maps.length, (index) {
       return Developer(
