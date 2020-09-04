@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:sqflite_flutter/developer_edit_page.dart';
 import 'package:sqflite_flutter/model/developer.dart';
@@ -18,9 +19,7 @@ const languages = [
   "Octave",
   "C",
   "Go",
-  "C#",
   "Scala",
-  "Ruby",
   "Javascript",
 ];
 
@@ -89,8 +88,19 @@ class _DevelopersPageState extends State<DevelopersPage> {
   }
 
   void saveDeveloper(Developer dev) {
-    final route = CupertinoPageRoute<bool>(
-      builder: (context) => DeveloperEditPage(dev: dev, repo: widget.repo),
+    final route = PageRouteBuilder<bool>(
+      pageBuilder: (context, anim, secondaryAnim) => DeveloperEditPage(dev: dev, repo: widget.repo),
+      transitionsBuilder: (context, anim, secondaryAnim, child) {
+        var begin = Offset(1.0, 0.0);
+        var end = Offset.zero;
+        var curve = Curves.ease;
+        var tween = Tween(begin:  begin, end: end).chain(CurveTween(curve: curve));
+        var offsetAnimation = anim.drive(tween);
+        return SlideTransition(
+          position: offsetAnimation,
+          child: child,
+        );
+      },
     );
 
     Navigator.push(
@@ -127,6 +137,13 @@ class _DevelopersPageState extends State<DevelopersPage> {
 
   @override
   Widget build(BuildContext context) {
+
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+      ),
+    );
+
     final appBar = AppBar(
       title: Container(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
@@ -164,9 +181,15 @@ class _DevelopersPageState extends State<DevelopersPage> {
             scrollDirection: Axis.horizontal,
             itemCount: languages.length,
             itemBuilder: (context, index) {
+              final selected = _heading == languages[index];
               return ChoiceChip(
-                label: Text(languages[index]),
-                selected: _heading == languages[index],
+                label: Text(
+                  languages[index],
+                  style: TextStyle(
+                    color: selected ? Colors.white : Colors.black,
+                  ),
+                ),
+                selected: selected,
                 onSelected: (selected) {
                   _heading = selected ? languages[index] : null;
 
@@ -175,6 +198,8 @@ class _DevelopersPageState extends State<DevelopersPage> {
                     heading: _heading,
                   );
                 },
+                avatar: selected ? Icon(Icons.check_circle, color: Colors.white) : null,
+                selectedColor: Theme.of(context).primaryColor,
               );
             },
             separatorBuilder: (context, index) {

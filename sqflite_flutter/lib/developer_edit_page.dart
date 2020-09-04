@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:sqflite_flutter/repo/developer_repo.dart';
 
 import 'main.dart';
@@ -153,6 +154,13 @@ class _DeveloperEditPageState extends State<DeveloperEditPage> {
 
   @override
   Widget build(BuildContext context) {
+
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+      ),
+    );
+
     final appBar = AppBar(
       title: Text(widget.dev.id == null ? "Create" : "Update"),
       actions: [
