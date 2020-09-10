@@ -4,9 +4,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:model_package/developer_model.dart';
 import 'package:sqflite_flutter/developer_edit_page.dart';
 import 'package:sqflite_flutter/model/developer.dart';
 import 'package:sqflite_flutter/repo/developer_repo.dart';
+import 'package:sqflite_flutter/repo/moor/developer_repo_impl.dart';
 
 const languages = [
   "Java",
@@ -23,13 +25,17 @@ const languages = [
   "Javascript",
 ];
 
+DeveloperDatabase _database;
+
 void main() {
+  _database = DeveloperDatabase();
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
@@ -49,7 +55,7 @@ class MyApp extends StatelessWidget {
         // closer together (more dense) than on mobile platforms.
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: DevelopersPage(repo: DeveloperRepo()),
+      home: DevelopersPage(repo: DeveloperRepoImpl(_database.developerDao)),
     );
   }
 }
@@ -209,7 +215,6 @@ class _DevelopersPageState extends State<DevelopersPage> {
         ),
       ),
     );
-
     return Scaffold(
       appBar: appBar,
       floatingActionButton: FloatingActionButton(

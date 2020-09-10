@@ -177,7 +177,7 @@ class _DeveloperEditPageState extends State<DeveloperEditPage> {
               final d = Developer(
                 name: _nameController.text,
                 heading: _heading,
-                age: int.parse(_ageController.text),
+                age: int.tryParse(_ageController.text) ?? 0,
               );
               widget.repo.insert(d).whenComplete(() {
                 Navigator.of(context).pop(true);
@@ -188,7 +188,7 @@ class _DeveloperEditPageState extends State<DeveloperEditPage> {
                 Developer(
                   id: widget.dev.id,
                   name: _nameController.text,
-                  age: int.parse(_ageController.text),
+                  age: int.tryParse(_ageController.text) ?? 0,
                   heading: _heading,
                 ),
               )
