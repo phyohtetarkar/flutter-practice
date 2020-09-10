@@ -26,22 +26,17 @@ class DeveloperDao extends DatabaseAccessor<DeveloperDatabase> with _$DeveloperD
   }
 
   Future<List<DeveloperEntry>> findAll({String name, String heading}) {
-    return (
-      select(developers)
-        ..where((tb) {
-          Expression<bool> predicate;
+    final query = select(developers);
 
-          if (name != null && name.isNotEmpty) {
-            predicate = tb.name.like("$name%");
-          }
+    if (name != null && name.isNotEmpty) {
+      query.where((tb) => tb.name.like("$name%"));
+    }
 
-          if (heading != null && heading.isNotEmpty) {
-            Expression<bool> headingEq = tb.heading.equals(heading);
-            predicate = predicate != null ? (predicate & headingEq) : headingEq;
-          }
-          return predicate ?? CustomExpression("1 = 1");
-        })
-    ).get();
+    if (heading != null && heading.isNotEmpty) {
+      query.where((tb) => tb.heading.equals(heading));
+    }
+
+    return query.get();
   }
 
 }
